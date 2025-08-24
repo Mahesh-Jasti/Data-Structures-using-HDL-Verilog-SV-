@@ -53,7 +53,7 @@ module tb_map_data_structure;
     reset = 0;
 
     // Insert key-value pairs
-    repeat (4) begin
+    repeat (7) begin
       @(negedge clk);
       key_in = $random;
       value_in = $random;
@@ -64,6 +64,19 @@ module tb_map_data_structure;
       op = 2'b00; // NOP
       #10;
     end
+    
+    // Insert key-value pairs
+    //repeat (7) begin
+      @(negedge clk);
+      key_in = 9;
+      value_in = $random;
+      op = 2'b01; // INSERT
+      valid_in = 1;
+      @(negedge clk);
+      valid_in = 0;
+      op = 2'b00; // NOP
+      #10;
+    //end
 
     // Lookup a key
     @(negedge clk);
@@ -84,6 +97,32 @@ module tb_map_data_structure;
     valid_in = 0;
     op = 2'b00;
     #10;
+    
+    // Insert key-value pairs
+    //repeat (7) begin
+      @(negedge clk);
+      key_in = 9;
+      value_in = $random;
+      op = 2'b01; // INSERT
+      valid_in = 1;
+      @(negedge clk);
+      valid_in = 0;
+      op = 2'b00; // NOP
+      #10;
+    //end
+    
+    // Insert key-value pairs
+    repeat (2) begin
+      @(negedge clk);
+      key_in = $random;
+      value_in = $random;
+      op = 2'b01; // INSERT
+      valid_in = 1;
+      @(negedge clk);
+      valid_in = 0;
+      op = 2'b00; // NOP
+      #10;
+    end
     
     // Lookup a key
     @(negedge clk);

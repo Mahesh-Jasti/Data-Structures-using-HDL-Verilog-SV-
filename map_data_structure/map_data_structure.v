@@ -23,8 +23,8 @@ module map_data_structure_non_pipelined #(
 
     generate
         if(MAP_SIZE == 2) begin
-            assign index_out = (op == DELETE) ? ((keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? 1'b1 : 1'b0) : 1'b0;
-            assign valid_out = ((op == LOOKUP) || (op == DELETE)) ? 
+            assign index_out = ((op == DELETE) || (op == INSERT)) ? ((keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? 1'b1 : 1'b0) : 1'b0;
+            assign valid_out = ((op == LOOKUP) || (op == DELETE) || (op == INSERT)) ? 
                                     ((keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? valid_vector[1] : 
                                     (keys[KEY_WIDTH-1:0] == key_in) ? valid_vector[0] : 1'b0) : 
                                     1'b0;
@@ -81,7 +81,7 @@ module map_data_structure_non_pipelined #(
             assign index_out = (high_valid_out) ? {1'b1, high_index_out} : 
                                (low_valid_out) ? {1'b0, low_index_out} : 'd0;
 
-            assign valid_out = ((op == LOOKUP) || (op == DELETE)) ? (high_valid_out | low_valid_out) : 1'b0;
+            assign valid_out = ((op == LOOKUP) || (op == DELETE) || (op == INSERT)) ? (high_valid_out | low_valid_out) : 1'b0;
             assign value_out = (op == LOOKUP) ? (high_valid_out ? high_value_out : 
                                                 (low_valid_out ? low_value_out : 'd0)) :
                                                 'd0;
@@ -142,11 +142,15 @@ module map_data_structure #(
         else begin
             case(op)
                 INSERT: begin
-                    if(valid_in && ready_out) begin
+                    if(valid_in && ready_out && ~valid_out_internal) begin
                         keys[KEY_WIDTH*free_list[fl_rd_ptr] +: KEY_WIDTH] <= key_in;
                         values[VALUE_WIDTH*free_list[fl_rd_ptr] +: VALUE_WIDTH] <= value_in;
                         map_valid_vector[free_list[fl_rd_ptr]] <= 1'b1;
                         fl_rd_ptr <= fl_rd_ptr + 1;
+                    end
+                    else if(valid_in && ready_out && valid_out_internal) begin
+                        // Key already exists, update value
+                        values[VALUE_WIDTH*map_key_index +: VALUE_WIDTH] <= value_in;
                     end
                 end
                 DELETE: begin
