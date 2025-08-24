@@ -6,7 +6,6 @@ module map_data_structure_non_pipelined #(
 )(
     input wire [KEY_WIDTH*MAP_SIZE-1:0] keys,
     input wire [VALUE_WIDTH*MAP_SIZE-1:0] values,
-    input wire [1:0] op, // 0 -- NOP, 1 -- insert, 2 -- delete, 3 -- lookup
     input wire [MAP_SIZE-1:0] valid_vector,
     input wire [KEY_WIDTH-1:0] key_in,
     input wire [VALUE_WIDTH-1:0] value_in,
@@ -23,15 +22,11 @@ module map_data_structure_non_pipelined #(
 
     generate
         if(MAP_SIZE == 2) begin
-            assign index_out = ((op == DELETE) || (op == INSERT)) ? ((keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? 1'b1 : 1'b0) : 1'b0;
-            assign valid_out = ((op == LOOKUP) || (op == DELETE) || (op == INSERT)) ? 
-                                    ((keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? valid_vector[1] : 
-                                    (keys[KEY_WIDTH-1:0] == key_in) ? valid_vector[0] : 1'b0) : 
-                                    1'b0;
-            assign value_out = (op == LOOKUP) ? 
-                                    ((keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? values[VALUE_WIDTH*2-1:VALUE_WIDTH] : 
-                                    (keys[KEY_WIDTH-1:0] == key_in) ? values[VALUE_WIDTH-1:0] : 'd0) : 
-                                    'd0;
+            assign index_out = (keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? 1'b1 : 1'b0;
+            assign valid_out = (keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? valid_vector[1] : 
+                                    ((keys[KEY_WIDTH-1:0] == key_in) ? valid_vector[0] : 1'b0);
+            assign value_out = (keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? values[VALUE_WIDTH*2-1:VALUE_WIDTH] : 
+                                    ((keys[KEY_WIDTH-1:0] == key_in) ? values[VALUE_WIDTH-1:0] : 'd0);
         end
         else begin
             localparam HALF = MAP_SIZE / 2;
@@ -52,7 +47,6 @@ module map_data_structure_non_pipelined #(
             ) upper_half (
                 .keys(keys[KEY_WIDTH*MAP_SIZE-1:KEY_WIDTH*HALF]),
                 .values(values[VALUE_WIDTH*MAP_SIZE-1:VALUE_WIDTH*HALF]),
-                .op(op),
                 .valid_vector(valid_vector[MAP_SIZE-1:HALF]),
                 .key_in(key_in),
                 .value_in(value_in),
@@ -69,7 +63,6 @@ module map_data_structure_non_pipelined #(
             ) lower_half (
                 .keys(keys[KEY_WIDTH*HALF-1:0]),
                 .values(values[VALUE_WIDTH*HALF-1:0]),
-                .op(op),
                 .valid_vector(valid_vector[HALF-1:0]),
                 .key_in(key_in),
                 .value_in(value_in),
@@ -79,12 +72,10 @@ module map_data_structure_non_pipelined #(
             );
 
             assign index_out = (high_valid_out) ? {1'b1, high_index_out} : 
-                               (low_valid_out) ? {1'b0, low_index_out} : 'd0;
-
-            assign valid_out = ((op == LOOKUP) || (op == DELETE) || (op == INSERT)) ? (high_valid_out | low_valid_out) : 1'b0;
-            assign value_out = (op == LOOKUP) ? (high_valid_out ? high_value_out : 
-                                                (low_valid_out ? low_value_out : 'd0)) :
-                                                'd0;
+                                    ((low_valid_out) ? {1'b0, low_index_out} : 'd0);
+            assign valid_out = high_valid_out | low_valid_out;
+            assign value_out = high_valid_out ? high_value_out : 
+                                    ((low_valid_out ? low_value_out : 'd0));
             
         end
         
@@ -174,7 +165,6 @@ module map_data_structure #(
     ) map_inst (
         .keys(keys),
         .values(values),
-        .op(op),
         .valid_vector(map_valid_vector),
         .key_in(key_in),
         .value_in(value_in),
