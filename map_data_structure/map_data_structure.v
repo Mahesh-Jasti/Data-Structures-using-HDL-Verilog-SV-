@@ -15,11 +15,6 @@ module map_data_structure_non_pipelined #(
     output wire valid_out
 );
 
-    localparam NOP = 2'b00,
-               INSERT = 2'b01,
-               DELETE = 2'b10,
-               LOOKUP = 2'b11;
-
     generate
         if(MAP_SIZE == 2) begin
             assign index_out = (keys[KEY_WIDTH*2-1:KEY_WIDTH] == key_in) ? 1'b1 : 1'b0;
