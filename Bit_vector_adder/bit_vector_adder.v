@@ -44,7 +44,7 @@ module bit_vector_adder_for_loop #(
 
     localparam NUM_LEVELS = $clog2(VECTOR_SIZE);
 
-    wire [$clog2(VECTOR_SIZE):0] sum_level [NUM_LEVELS:0][VECTOR_SIZE-1:0];    // big vector -- wasted space
+    wire [$clog2(VECTOR_SIZE):0] sum_level [NUM_LEVELS-1:0][(VECTOR_SIZE/2)-1:0];    // big vector -- wasted space
 
     /*generate
         genvar i;
@@ -55,19 +55,19 @@ module bit_vector_adder_for_loop #(
 
     generate
         genvar j,k;
-        for(j=0; j<=NUM_LEVELS; j=j+1) begin : LEVELS
+        for(j=1; j<=NUM_LEVELS; j=j+1) begin : LEVELS
             for(k=0; k<(VECTOR_SIZE >> j); k=k+1) begin
-                if(j == 0) begin
-                    assign sum_level[0][k] = vector[k];
+                if(j == 1) begin
+                    assign sum_level[j-1][k] = vector[2*k] + vector[2*k+1];
                 end
                 else begin
-                    assign sum_level[j][k] = sum_level[j-1][2*k] + sum_level[j-1][2*k+1];
+                    assign sum_level[j-1][k] = sum_level[j-2][2*k] + sum_level[j-2][2*k+1];
                 end
             end
         end
     endgenerate
 
-    assign sum = sum_level[NUM_LEVELS][0];
+    assign sum = sum_level[NUM_LEVELS-1][0];
 
 endmodule
 
